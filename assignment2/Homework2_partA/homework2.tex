@@ -1,0 +1,167 @@
+\documentclass[12pt]{article}%
+	\usepackage{amsfonts}
+	\usepackage{fancyhdr}
+	\usepackage{comment}
+	\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2.2cm, right=2.2cm]%
+	{geometry}
+	\usepackage{times}
+	\usepackage{amsmath}
+	\usepackage{changepage}
+	\usepackage{amssymb}
+	\usepackage{graphicx}%
+	\usepackage{bm}
+	\setcounter{MaxMatrixCols}{30}
+	\newtheorem{theorem}{Theorem}
+	\newtheorem{acknowledgement}[theorem]{Acknowledgement}
+	\newtheorem{algorithm}[theorem]{Algorithm}
+	\newtheorem{axiom}{Axiom}
+	\newtheorem{case}[theorem]{Case}
+	\newtheorem{claim}[theorem]{Claim}
+	\newtheorem{conclusion}[theorem]{Conclusion}
+	\newtheorem{condition}[theorem]{Condition}
+	\newtheorem{conjecture}[theorem]{Conjecture}
+	\newtheorem{corollary}[theorem]{Corollary}
+	\newtheorem{criterion}[theorem]{Criterion}
+	\newtheorem{definition}[theorem]{Definition}
+	\newtheorem{example}[theorem]{Example}
+	\newtheorem{exercise}[theorem]{Exercise}
+	\newtheorem{lemma}[theorem]{Lemma}
+	\newtheorem{notation}[theorem]{Notation}
+	\newtheorem{problem}[theorem]{Problem}
+	\newtheorem{proposition}[theorem]{Proposition}
+	\newtheorem{remark}[theorem]{Remark}
+	\newtheorem{solution}[theorem]{Solution}
+	\newtheorem{summary}[theorem]{Summary}
+	\newenvironment{proof}[1][Proof]{\textbf{#1.} }{\ \rule{0.5em}{0.5em}}
+	
+	\newcommand{\Q}{\mathbb{Q}}
+	\newcommand{\R}{\mathbb{R}}
+	\newcommand{\C}{\mathbb{C}}
+	\newcommand{\Z}{\mathbb{Z}}
+	
+	\begin{document}
+	
+	\title{CS280 Fall 2018 Assignment 2 \\ Part A}
+	\author{CNNs}
+	\date{Due in class, Nov 02, 2018}
+	\maketitle
+	
+	\paragraph{Name: Yingying Ma}
+	
+	\paragraph{Student ID: 88678580}
+	
+	\newpage
+	
+	\section*{1. Linear Regression(10 points)}
+	\begin{itemize}
+		\item Linear regression has the form $E[y\lvert x] = w_{0} + \bm{w^{T}}x$. It is possible to solve for $\bm{w}$ and $w_{0}$ seperately. Show that
+		\begin{equation*}
+		w_{0} = \frac{1}{n}\sum_{i}y_{i} - \frac{1}{n}\sum_{i}x_{i}^{T}\bm{w} = \overline{y} - \overline{x}^{T}\bm{w} 
+		\end{equation*}
+		
+		
+		\item Show how to cast the problem of linear regression with respect to the absolute value loss function, $l(h,x,y)=\lvert h(x) - y \rvert$, as a linear program.
+	\end{itemize}
+	\textbf{Solution.}
+	\begin{itemize}
+		\item 
+			Assume the loss function is MSE:
+			\[ L = \sum_i[y_i - (w_0 + \mathbf{w}^T x_i)]^2 \]
+			Compute the derivative of $w_0$,
+			\begin{align*}
+				\frac{\partial L}{\partial w_0} &= \sum_i [y_i - (w_0 + \mathbf{w}^T x_i)] 
+			\end{align*}
+			Let the derivative be 0, then we get
+			\[ w_{0} = \frac{1}{n}\sum_{i}y_{i} - \frac{1}{n}\sum_{i}x_{i}^{T}\bm{w} = \overline{y} - \overline{x}^{T}\bm{w} \]
+		\item
+			 We need to convert the formula to a linear program problem:
+			 \[ \min l(h,x,y)=\lvert h(x) - y \rvert = \lvert w^T x - y \rvert \]
+			 Define a vector $s = (s_1, \dots, s_m)$. 
+			 If $\lvert h(x_i) - y_i) \rvert = \lvert w^T x_i - y_i \rvert \ge 0$, let $s_i \ge w^T x_i - y_i$, which is equal to \[ w^T x_i - s_i \le y_i \]
+			 If $\lvert h(x_i) - y_i) \rvert = \lvert w^T x_i - y_i \rvert \le 0$, let $s_i \ge - w^T x_i + y_i$, which is equal to \[ -w^T x_i - s_i \le -y_i \]
+			 The LP problem is:
+			 \begin{align*}
+				 \min & \quad s_i \\
+				 \textbf{s.t. } & w^T x_i - s_i \le y_i \\
+								& -w^T x_i - s_i \le -y_i 
+			 \end{align*}
+			 Let $A = [X - I_m; -X - I_m] \in \mathbb{R}^{2m\times(m+d)}$, $v = (w_1, \dots, w_d, s_1, \dots, s_m)\in R^{d+m}$, $b = (y_1, \dots, y_m, -y_1, \dots, y_m)^T \in R^{2m}$, $c = (0_d; 1_m)$. The LP problem is:
+			 \begin{align*}
+				 \min & \quad c^T v \\
+				 \textbf{s.t. } & Av \le b
+			 \end{align*}
+			 
+			
+	\end{itemize}
+	
+	
+	
+	
+	\newpage
+	\section*{2. Convolution Layers (5 points)}
+	We have a video sequence and we would like to design a 3D convolutional neural network to recognize events in the video. The frame size is 32x32 and each video has 30 frames. Let's consider the first convolutional layer.  
+	\begin{itemize}
+		\item We use a set of $5\times 5\times 5$ convolutional kernels. Assume we have 64 kernels and apply stride 2 in spatial domain and 4 in temporal domain, what is the size of output feature map? Use proper padding if needed and clarify your notation.
+		\item We want to keep the resolution of the feature map and decide to use the dilated convolution. Assume we have one kernel only with size $7\times 7\times 5$ and apply a dilated convolution of rate $3$. What is the size of the output feature map? What are the downsampling and upsampling strides if you want to compute the same-sized feature map without using dilation?   
+	\end{itemize}
+	Note: You need to write down the derivation of your results.
+	
+	\textbf{Solution.}
+	
+	\begin{itemize}
+		\item Use padding 2:
+		\begin{align*}
+			H_{out} = \frac{32 - 5}{2} + 1 = 14 \\
+			W_{out} = \frac{32 - 5}{2} + 1 = 14 \\
+			T_{out} = \frac{30 - 5}{4} + 1 = 7 
+		\end{align*}
+		\item The size of the output feature map is:
+		\begin{align*}
+			H_{out} = \frac{32 - 3 \times (7-1) -1}{1} + 1 = 14 \\
+			W_{out} = \frac{32 - 3 \times (7-1) -1}{1} + 1 = 14 \\
+			T_{out} = \frac{30 - 3 \times (5-1) -1}{1} + 1 = 18
+		\end{align*}
+		Let down-sampling kernel size be $3\times3\times2$, stride be 4, after down-sampling, the size of the output is:
+		\begin{align*}
+			H_{out} = \frac{32 + 6 - 7}{4} + 1 = 8 \\
+			W_{out} = \frac{32 + 6 - 7}{4} + 1 = 8 \\
+			T_{out} = \frac{30 + 4 - 5}{4} + 1 = 8 \\
+		\end{align*}
+		For up-sampling, the kernel size need to be $6\times6\times7$
+		\begin{align*}
+			H_{out} = \frac{8 + 12 - 7}{1} + 1 = 14 \\
+			W_{out} = \frac{8 + 12 - 7}{1} + 1 = 14 \\
+			T_{out} = \frac{8 + 14 - 5}{1} + 1 = 18 \\
+		\end{align*}
+	\end{itemize}
+	
+	\newpage
+	\section*{3. Batch Normalization (5 points)}
+	With Batch Normalization (BN), show that backpropagation through a layer is unaffected by the scale of its parameters. 
+	\begin{itemize}
+		\item Show that \[BN(\mathbf{Wu})=BN((a\mathbf{W})\mathbf{u})\] where $\mathbf{u}$ is the input vector and $\mathbf{W}$ is the weight matrix, $a$ is a scalar. 
+		\item (Bonus: 5 pts) Show that 
+		\[\frac{\partial BN((a\mathbf{W})\mathbf{u})}{\partial \mathbf{u}}=\frac{\partial BN(\mathbf{W}\mathbf{u})}{\partial \mathbf{u}}\]
+	\end{itemize}
+	\textbf{Solution.}
+	\begin{itemize}
+		\item 
+		\[ BN(\mathbf{Wu}) = \frac{\mathbf{Wu} - \mu}{\sqrt{\sigma^2}} \]
+		where $\mu$ is the mean of $\mathbf{Wu}$ and $\sigma^2$ is the variation of $\mathbf{Wu}$.
+		\begin{align*}
+			BN((a\mathbf{W})\mathbf{u}) &= \frac{a\mathbf{Wu} - a\mu}{\sqrt{a^2\sigma^2}} \\
+			& = BN(\mathbf{Wu})
+		\end{align*}
+		\item
+		\begin{align*}
+			\frac{\partial BN(\mathbf{Wu})}{\partial \mathbf{u}} & = \frac{\mathbf{W}}{\sqrt{\sigma^2}} \\
+			\frac{\partial BN((a\mathbf{W})\mathbf{u})}{\partial \mathbf{u}} & = \frac{a\mathbf{W}}{\sqrt{a^2\sigma^2}} \\
+			&= \frac{\mathbf{W}}{\sqrt{\sigma^2}} \\
+			&= \frac{\partial BN(\mathbf{Wu})}{\partial \mathbf{u}}
+		\end{align*}
+		
+	\end{itemize}
+	
+	
+	\end{document}
+	
